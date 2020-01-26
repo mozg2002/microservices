@@ -6,7 +6,7 @@ import (
 	"net"
 	"sync"
 
-	pb "gitee.com/mozg210/microservices/consignment-server/proto/consigment"
+	pb "github.com/mozg2002/microservices/consignment-server/proto/consigment"
 	"google.golang.org/grpc"
 	"google.golang.org/reflection"
 )
