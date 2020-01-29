@@ -6,9 +6,9 @@ import (
 	"net"
 	"sync"
 
-	pb "github.com/mozg2002/microservices/consignment-server/proto/consigment"
+	pb "github.com/mozg2002/microservices/consignment-server/proto/consignment"
 	"google.golang.org/grpc"
-	"google.golang.org/reflection"
+	"google.golang.org/grpc/reflection"
 )
 
 const (
@@ -17,6 +17,7 @@ const (
 
 type repository interface {
 	Create(*pb.Consignment) (*pb.Consignment, error)
+	GetAll() []*pb.Consignment
 }
 
 type Repository struct {
@@ -28,8 +29,12 @@ func (repo *Repository) Create(consignment *pb.Consignment) (*pb.Consignment, er
 	repo.mu.Lock()
 	updated := append(repo.consignments, consignment)
 	repo.consignments = updated
-	repo.mu.Ulock()
+	repo.mu.Unlock()
 	return consignment, nil
+}
+
+func (repo *Repository) GetAll() []*pb.Consignment {
+	return repo.consignments
 }
 
 type service struct {
@@ -45,18 +50,23 @@ func (s *service) CreateConsignment(ctx context.Context, req *pb.Consignment) (*
 	return &pb.Response{Created: true, Consignment: consignment}, nil
 }
 
+func (s *service) GetConsignments(ctx context.Context, req *pb.GetRequest) (*pb.Response, error) {
+	consignments := s.repo.GetAll()
+	return &pb.Response{Consignments: consignments}, nil
+}
+
 func main() {
 	repo := &Repository{}
 
 	lis, err := net.Listen("tcp", port)
 	if err != nil {
-		log.Fatelf()
+		log.Panic()
 	}
 	s := grpc.NewServer()
 
-	pb.RegisterSippingserviceServer(s, &service{repo})
+	pb.RegisterShippingServiceServer(s, &service{repo})
 
-	reflection.Register(s)
+	//reflection.Register(s)
 
 	log.Println("Running on port:", port)
 	if err := s.Serve(lis); err != nil {
